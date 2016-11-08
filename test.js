@@ -1,6 +1,7 @@
-"use strict"
+"use strict" /* eslint-env mocha */
 
 const moment = require("moment")
+
 require("moment-timezone")
 
 const { expect } = require("chai")
@@ -391,7 +392,18 @@ describe("rrule", function() {
   //    (2001 9:00 AM EDT)June 10;July 10
   // Note: Since none of the BYDAY, BYMONTHDAY or BYYEARDAY components
   // are specified, the day is gotten from DTSTART
-  it("should generate yearly in June and July for 10 occurrences")
+  it("should generate yearly in June and July for 10 occurrences", function() {
+    const date = moment.tz("1997-06-10T09:00:00", TZ)
+    const rule = parseRule("RRULE:FREQ=YEARLY;COUNT=10;BYMONTH=6,7")
+
+    const results = collect(allDates(date, rule))
+
+    expect(results.length).to.equal(10)
+    expect(results[0].format()).to.equal("1997-06-10T09:00:00-04:00")
+    expect(results[1].format()).to.equal("1997-07-10T09:00:00-04:00")
+    expect(results[8].format()).to.equal("2001-06-10T09:00:00-04:00")
+    expect(results[9].format()).to.equal("2001-07-10T09:00:00-04:00")
+  })
 
   // Every other year on January, February, and March for 10 occurrences:
   //
@@ -402,7 +414,18 @@ describe("rrule", function() {
   //    (1999 9:00 AM EST)January 10;February 10;March 10
   //    (2001 9:00 AM EST)January 10;February 10;March 10
   //    (2003 9:00 AM EST)January 10;February 10;March 10
-  it("should generate every other year on January, February, and March for 10 occurrences")
+  it("should generate every other year on January, February, and March for 10 occurrences", function() {
+    const date = moment.tz("1997-03-10T09:00:00", TZ)
+    const rule = parseRule("RRULE:FREQ=YEARLY;INTERVAL=2;COUNT=10;BYMONTH=1,2,3")
+
+    const results = collect(allDates(date, rule))
+
+    expect(results.length).to.equal(10)
+    expect(results[0].format()).to.equal("1997-03-10T09:00:00-05:00")
+    expect(results[1].format()).to.equal("1999-01-10T09:00:00-05:00")
+    expect(results[8].format()).to.equal("2003-02-10T09:00:00-05:00")
+    expect(results[9].format()).to.equal("2003-03-10T09:00:00-05:00")
+  })
 
   // Every 3rd year on the 1st, 100th and 200th day for 10 occurrences:
   //
@@ -596,7 +619,6 @@ describe("rrule", function() {
   // ==> (1997 EDT)August 5,17,19,31
   //
   it("should generate different days because of week start (SU)", function() {
-
     const date = moment.tz("1997-08-05T09:00:00", TZ)
     const rule = parseRule("RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=SU")
 
