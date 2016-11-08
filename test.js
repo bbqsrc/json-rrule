@@ -267,21 +267,78 @@ describe("rrule", function() {
     expect(results[7].format()).to.equal("1997-10-16T09:00:00-04:00")
     expect(results.length).to.equal(8)
   })
+
+  // Monthly on the 1st Friday for ten occurrences:
+  //
+  // DTSTART;TZID=US-Eastern:19970905T090000
+  // RRULE:FREQ=MONTHLY;COUNT=10;BYDAY=1FR
+  //
+  // ==> (1997 9:00 AM EDT)September 5;October 3
+  //    (1997 9:00 AM EST)November 7;Dec 5
+  //    (1998 9:00 AM EST)January 2;February 6;March 6;April 3
+  //    (1998 9:00 AM EDT)May 1;June 5
+  it("should generate monthly on the 1st Friday for ten occurrences", function() {
+
+    const date = moment.tz("1997-09-05T09:00:00", TZ)
+    const rule = parseRule("RRULE:FREQ=MONTHLY;COUNT=10;BYDAY=1FR")
+
+    const results = collect(allDates(date, rule))
+
+    expect(results[0].format()).to.equal("1997-09-05T09:00:00-04:00")
+    expect(results[1].format()).to.equal("1997-10-03T09:00:00-04:00")
+    expect(results[2].format()).to.equal("1997-11-07T09:00:00-05:00")
+    expect(results[3].format()).to.equal("1997-12-05T09:00:00-05:00")
+    expect(results[4].format()).to.equal("1998-01-02T09:00:00-05:00")
+    expect(results[5].format()).to.equal("1998-02-06T09:00:00-05:00")
+    expect(results[6].format()).to.equal("1998-05-01T09:00:00-04:00")
+    expect(results[7].format()).to.equal("1998-06-05T09:00:00-04:00")
+    expect(results.length).to.equal(10)
+  })
+
+  //* LAST TWO TESTS *//
+  // An example where the days generated makes a difference because of
+  // WKST:
+  //
+  // DTSTART;TZID=US-Eastern:19970805T090000
+  // RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=MO
+  //
+  // ==> (1997 EDT)Aug 5,10,19,24
+  it("should generate different days because of week start (MO)", function() {
+
+    const date = moment.tz("1997-08-05T09:00:00", TZ)
+    const rule = parseRule("RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=MO")
+
+    const results = collect(allDates(date, rule))
+
+    expect(results[0].format()).to.equal("1997-08-05T09:00:00-04:00")
+    expect(results[1].format()).to.equal("1997-08-10T09:00:00-04:00")
+    expect(results[2].format()).to.equal("1997-08-19T09:00:00-04:00")
+    expect(results[3].format()).to.equal("1997-08-24T09:00:00-04:00")
+  })
+  // changing only WKST from MO to SU, yields different results...
+  //
+  // DTSTART;TZID=US-Eastern:19970805T090000
+  // RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=SU
+  // ==> (1997 EDT)August 5,17,19,31
+  //
+  it("should generate different days because of week start (SU)", function() {
+
+    const date = moment.tz("1997-08-05T09:00:00", TZ)
+    const rule = parseRule("RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=SU")
+
+    const results = collect(allDates(date, rule))
+
+    expect(results[0].format()).to.equal("1997-08-05T09:00:00-04:00")
+    expect(results[1].format()).to.equal("1997-08-17T09:00:00-04:00")
+    expect(results[2].format()).to.equal("1997-08-19T09:00:00-04:00")
+    expect(results[3].format()).to.equal("1997-08-31T09:00:00-04:00")
+  })
 })
 
 
 
 
 
-// Monthly on the 1st Friday for ten occurrences:
-//
-// DTSTART;TZID=US-Eastern:19970905T090000
-// RRULE:FREQ=MONTHLY;COUNT=10;BYDAY=1FR
-//
-// ==> (1997 9:00 AM EDT)September 5;October 3
-//    (1997 9:00 AM EST)November 7;Dec 5
-//    (1998 9:00 AM EST)January 2;February 6;March 6;April 3
-//    (1998 9:00 AM EDT)May 1;June 5
 
 // Monthly on the 1st Friday until December 24, 1997:
 //
@@ -524,18 +581,4 @@ describe("rrule", function() {
 //    (September 3, 1997 EDT)9:00,9:20,9:40,10:00,10:20,
 //                          ...16:00,16:20,16:40
 // ...
-//
-// An example where the days generated makes a difference because of
-// WKST:
-//
-// DTSTART;TZID=US-Eastern:19970805T090000
-// RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=MO
-//
-// ==> (1997 EDT)Aug 5,10,19,24
-//
-// changing only WKST from MO to SU, yields different results...
-//
-// DTSTART;TZID=US-Eastern:19970805T090000
-// RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=SU
-// ==> (1997 EDT)August 5,17,19,31
 //
