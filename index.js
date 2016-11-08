@@ -1,6 +1,6 @@
 "use strict"
 
-const moment = require("moment")
+require("moment")
 require("moment-timezone")
 
 function isoString(x) {
@@ -11,6 +11,7 @@ function isoString(x) {
   const h = x.substring(9, 11)
   const m = x.substring(11, 13)
   const s = x.substring(13, 15)
+
   return `${yy}-${mm}-${dd}T${h}:${m}:${s}.000Z`
 }
 
@@ -31,8 +32,8 @@ function parseRule(rule) {
 
   const o = {}
 
-  for (const x of chunks) {
-    const { key, value } = x
+  for (const chunk of chunks) {
+    const { key, value } = chunk
 
     switch (key) {
     case "FREQ":
@@ -69,7 +70,7 @@ function parseRule(rule) {
       break
     case "BYDAY":
       // TODO: handle 1FR, 2FR and FR
-      o.byDay = value.split(",") //.map(x => parseInt(x, 10))
+      o.byDay = value.split(",")
       break
     case "BYMONTHDAY":
       o.byMonthDay = value.split(",").map(x => parseInt(x, 10))
@@ -95,21 +96,10 @@ function parseRule(rule) {
   return o
 }
 
-const TIME_UNITS = {
-  yearly: "years",
-  monthly: "months",
-  weekly: "weeks",
-  daily: "days",
-  hourly: "hours",
-  minutely: "minutes",
-  secondly: "seconds"
-}
-
 function* allDates(fromDate, rule) {
   let curDate = fromDate.clone()
   const weekStart = rule.weekStart == null ? "MO" : rule.weekStart
   const interval = rule.interval == null ? 1 : rule.interval
-  let watchdog = 0
   let i = 0
 
   if (rule.frequency === "weekly") {
@@ -151,8 +141,7 @@ function* allDates(fromDate, rule) {
           }
         }
 
-        dayDate.add(1, "days")
-
+        curDate.add(1, "days")
       } else {
         yield curDate.clone()
 
@@ -170,7 +159,6 @@ function* allDates(fromDate, rule) {
       const weeklyDate = curDate.clone()
 
       if (rule.byDay) {
-        const month = weeklyDate.month()
         const days = rule.byDay.map(d => DAYS.indexOf(d))
         const dayDate = weeklyDate.clone()
 
@@ -194,7 +182,7 @@ function* allDates(fromDate, rule) {
           }
         }
 
-        for (let i = 1; i < interval; ++i) {
+        for (let j = 1; j < interval; ++j) {
           dayDate.add(1, "weeks")
         }
 
@@ -247,10 +235,11 @@ function* allDates(fromDate, rule) {
       }
 
       curDate.add(interval, "years")
-    } else {
-      throw new Error("Invalid frequency: " + rule.frequency)
-    }
+    } else if (rule.frequence === "monthly") {
 
+    } else {
+      throw new Error(`Invalid frequency: ${rule.frequency}`)
+    }
   }
 }
 

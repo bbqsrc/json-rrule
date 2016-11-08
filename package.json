@@ -4,12 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test.js"
   },
   "author": "Brendan Molloy <brendan@bbqsrc.net> (https://brendan.so/)",
   "license": "ISC",
   "devDependencies": {
+    "babel-eslint": "^7.1.0",
     "chai": "^3.5.0",
+    "eslint": "^3.9.1",
+    "eslint-plugin-babel": "^3.3.0",
     "mocha": "^3.1.2"
   }
 }
