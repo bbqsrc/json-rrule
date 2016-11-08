@@ -32,8 +32,10 @@ function collect(generator, count) {
 
 const TZ = "US/Eastern"
 const DT = moment.tz("1997-09-02T09:00:00", TZ)
+const DT2 = moment.tz("1998-01-01T09:00:00", TZ)
 
 describe("rrule", function() {
+  this.slow(5)
   // Daily for 10 occurrences:
   //
   // DTSTART;TZID=US-Eastern:19970902T090000
@@ -108,9 +110,6 @@ describe("rrule", function() {
     expect(results[3].format()).to.equal("1997-10-02T09:00:00-04:00")
     expect(results[4].format()).to.equal("1997-10-12T09:00:00-04:00")
   })
-
-
-  const DT2 = moment.tz("1998-01-01T09:00:00", TZ)
 
   // Everyday in January, for 3 years:
   //
@@ -600,7 +599,6 @@ describe("rrule", function() {
   //
   // ==> (1997 EDT)Aug 5,10,19,24
   it("should generate different days because of week start (MO)", function() {
-
     const date = moment.tz("1997-08-05T09:00:00", TZ)
     const rule = parseRule("RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=MO")
 
@@ -628,5 +626,14 @@ describe("rrule", function() {
     expect(results[1].format()).to.equal("1997-08-17T09:00:00-04:00")
     expect(results[2].format()).to.equal("1997-08-19T09:00:00-04:00")
     expect(results[3].format()).to.equal("1997-08-31T09:00:00-04:00")
+  })
+
+  it("should generate 5 years of dates in less than 100ms", function() {
+    this.timeout(100)
+
+    const date = moment.tz("1997-08-05T09:00:00", TZ)
+    const rule = { frequency: "weekly", interval: 2, byDay: ["MO", "WE"], until: "2001-08-05T09:00:00Z" }
+
+    const results = collect(allDates(date, rule))
   })
 })
