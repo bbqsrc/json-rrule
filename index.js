@@ -116,8 +116,15 @@ function* allDates(fromDate, rule) {
     if (rule.byDay && !rule.byDay.includes(DAYS[curDate.day()])) {
       // According to the spec, the start date is _always_ generated, even if it doesnt fit.
       yield curDate.clone()
-    }
 
+      if (rule.count) {
+        ++i
+
+        if (i >= rule.count) {
+          return
+        }
+      }
+    }
   }
 
   for (;;) {
@@ -134,11 +141,28 @@ function* allDates(fromDate, rule) {
 
         if (days.includes(curDate.day())) {
           yield curDate.clone()
+
+          if (rule.count) {
+            ++i
+
+            if (i >= rule.count) {
+              return
+            }
+          }
         }
 
         dayDate.add(1, "days")
+
       } else {
         yield curDate.clone()
+
+        if (rule.count) {
+          ++i
+
+          if (i >= rule.count) {
+            return
+          }
+        }
 
         curDate.add(interval, "days")
       }
@@ -150,10 +174,17 @@ function* allDates(fromDate, rule) {
         const days = rule.byDay.map(d => DAYS.indexOf(d))
         const dayDate = weeklyDate.clone()
 
-        while (dayDate.month() === month) {
+        for (;;) {
           if (days.includes(dayDate.day())) {
-            console.error(days, dayDate.day(), dayDate.format("LLLL"))
             yield dayDate.clone()
+
+            if (rule.count) {
+              ++i
+
+              if (i >= rule.count) {
+                return
+              }
+            }
           }
 
           dayDate.add(1, "days")
@@ -170,6 +201,14 @@ function* allDates(fromDate, rule) {
         curDate = dayDate.clone()
       } else {
         yield weeklyDate.clone()
+
+        if (rule.count) {
+          ++i
+
+          if (i >= rule.count) {
+            return
+          }
+        }
 
         curDate.add(interval, "weeks")
       }
@@ -191,6 +230,15 @@ function* allDates(fromDate, rule) {
             }
 
             yield monthDate.clone()
+
+            if (rule.count) {
+              ++i
+
+              if (i >= rule.count) {
+                return
+              }
+            }
+
             monthDate.add(1, "days")
           }
         }
@@ -203,14 +251,6 @@ function* allDates(fromDate, rule) {
       throw new Error("Invalid frequency: " + rule.frequency)
     }
 
-    // Apply COUNT rule
-    if (rule.count) {
-      ++i
-
-      if (i >= rule.count) {
-        break
-      }
-    }
   }
 }
 

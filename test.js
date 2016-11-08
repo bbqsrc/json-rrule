@@ -245,17 +245,33 @@ describe("rrule", function() {
     expect(results[2].format()).to.equal("1997-09-05T09:00:00-04:00")
     expect(results[3].format()).to.equal("1997-09-15T09:00:00-04:00")
   })
+  // Every other week on Tuesday and Thursday, for 8 occurrences:
+  //
+  // DTSTART;TZID=US-Eastern:19970902T090000
+  // RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=8;WKST=SU;BYDAY=TU,TH
+  //
+  // ==> (1997 9:00 AM EDT)September 2,4,16,18,30;October 2,14,16
+  it("should generate every other week on Tuesday and Thursday, for 8 occurrences", function() {
+    const date = DT.clone()
+    const rule = parseRule("RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=8;WKST=SU;BYDAY=TU,TH")
+
+    const results = collect(allDates(date, rule))
+
+    expect(results[0].format()).to.equal("1997-09-02T09:00:00-04:00")
+    expect(results[1].format()).to.equal("1997-09-04T09:00:00-04:00")
+    expect(results[2].format()).to.equal("1997-09-16T09:00:00-04:00")
+    expect(results[3].format()).to.equal("1997-09-18T09:00:00-04:00")
+    expect(results[4].format()).to.equal("1997-09-30T09:00:00-04:00")
+    expect(results[5].format()).to.equal("1997-10-02T09:00:00-04:00")
+    expect(results[6].format()).to.equal("1997-10-14T09:00:00-04:00")
+    expect(results[7].format()).to.equal("1997-10-16T09:00:00-04:00")
+    expect(results.length).to.equal(8)
+  })
 })
 
 
 
 
-// Every other week on Tuesday and Thursday, for 8 occurrences:
-//
-// DTSTART;TZID=US-Eastern:19970902T090000
-// RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=8;WKST=SU;BYDAY=TU,TH
-//
-// ==> (1997 9:00 AM EDT)September 2,4,16,18,30;October 2,14,16
 
 // Monthly on the 1st Friday for ten occurrences:
 //
