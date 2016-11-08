@@ -96,41 +96,84 @@ function parseRule(rule) {
   return o
 }
 
+
+
 function* allDates(fromDate, rule) {
   let curDate = fromDate.clone()
   const weekStart = rule.weekStart == null ? "MO" : rule.weekStart
   const interval = rule.interval == null ? 1 : rule.interval
   let i = 0
 
-  if (rule.frequency === "weekly") {
-    if (rule.byDay && !rule.byDay.includes(DAYS[curDate.day()])) {
-      // According to the spec, the start date is _always_ generated, even if it doesnt fit.
+  const count = rule.count ? () => {
+    ++i
+    return i >= rule.count
+  } : () => false
+
+  function* daily() {
+    if (rule.byDay) {
+      const days = rule.byDay && rule.byDay.map(d => DAYS.indexOf(d))
+
+      if (days.includes(curDate.day())) {
+        yield curDate.clone()
+      }
+
+      curDate.add(1, "days")
+    } else {
       yield curDate.clone()
 
-      if (rule.count) {
-        ++i
-
-        if (i >= rule.count) {
-          return
-        }
-      }
+      curDate.add(interval, "days")
     }
   }
 
-  for (;;) {
-    // Apply UNTIL rule
-    if (rule.until && curDate.isAfter(rule.until)) {
-      break
+  function* weekly() {
+    const weeklyDate = curDate.clone()
+
+    if (rule.byDay) {
+      const days = rule.byDay.map(d => DAYS.indexOf(d))
+      const dayDate = weeklyDate.clone()
+
+      for (;;) {
+        if (days.includes(dayDate.day())) {
+          yield dayDate.clone()
+        }
+
+        dayDate.add(1, "days")
+
+        if (dayDate.day() === DAYS.indexOf(weekStart)) {
+          break
+        }
+      }
+
+      for (let j = 1; j < interval; ++j) {
+        dayDate.add(1, "weeks")
+      }
+
+      curDate = dayDate.clone()
+    } else {
+      yield weeklyDate.clone()
+
+      curDate.add(interval, "weeks")
     }
+  }
 
-    if (rule.frequency === "daily") {
-      // Mutating function, beware!
+  function* yearly() {
+    if (rule.byMonth) {
+      const monthDate = curDate.clone()
 
-      if (rule.byDay) {
-        const days = rule.byDay && rule.byDay.map(d => DAYS.indexOf(d))
+      for (const month of rule.byMonth) {
+        monthDate.set("month", month - 1)
 
-        if (days.includes(curDate.day())) {
-          yield curDate.clone()
+        while (monthDate.month() === month - 1) {
+          const days = rule.byDay && rule.byDay.map(d => DAYS.indexOf(d))
+
+          if (days) {
+            if (!days.includes(monthDate.day())) {
+              monthDate.add(1, "days")
+              continue
+            }
+          }
+
+          yield monthDate.clone()
 
           if (rule.count) {
             ++i
@@ -139,106 +182,52 @@ function* allDates(fromDate, rule) {
               return
             }
           }
+
+          monthDate.add(1, "days")
         }
-
-        curDate.add(1, "days")
-      } else {
-        yield curDate.clone()
-
-        if (rule.count) {
-          ++i
-
-          if (i >= rule.count) {
-            return
-          }
-        }
-
-        curDate.add(interval, "days")
       }
-    } else if (rule.frequency === "weekly") {
-      const weeklyDate = curDate.clone()
+    } else if (rule.byDay) {
 
-      if (rule.byDay) {
-        const days = rule.byDay.map(d => DAYS.indexOf(d))
-        const dayDate = weeklyDate.clone()
+    }
 
-        for (;;) {
-          if (days.includes(dayDate.day())) {
-            yield dayDate.clone()
+    curDate.add(interval, "years")
+  }
 
-            if (rule.count) {
-              ++i
+  if (rule.frequency === "weekly") {
+    if (rule.byDay && !rule.byDay.includes(DAYS[curDate.day()])) {
+      // According to the spec, the start date is _always_ generated, even if it doesnt fit.
+      yield curDate.clone()
 
-              if (i >= rule.count) {
-                return
-              }
-            }
-          }
-
-          dayDate.add(1, "days")
-
-          if (dayDate.day() === DAYS.indexOf(weekStart)) {
-            break
-          }
-        }
-
-        for (let j = 1; j < interval; ++j) {
-          dayDate.add(1, "weeks")
-        }
-
-        curDate = dayDate.clone()
-      } else {
-        yield weeklyDate.clone()
-
-        if (rule.count) {
-          ++i
-
-          if (i >= rule.count) {
-            return
-          }
-        }
-
-        curDate.add(interval, "weeks")
+      if (count()) {
+        return
       }
-    } else if (rule.frequency === "yearly") {
-      if (rule.byMonth) {
-        const monthDate = curDate.clone()
+    }
+  }
 
-        for (const month of rule.byMonth) {
-          monthDate.set("month", month - 1)
+  const iters = {
+    daily,
+    weekly,
+    yearly
+  }
 
-          while (monthDate.month() === month - 1) {
-            const days = rule.byDay && rule.byDay.map(d => DAYS.indexOf(d))
+  for (;;) {
+    // Apply UNTIL rule
+    if (rule.until && curDate.isAfter(rule.until)) {
+      break
+    }
 
-            if (days) {
-              if (!days.includes(monthDate.day())) {
-                monthDate.add(1, "days")
-                continue
-              }
-            }
+    const iter = iters[rule.frequency]
 
-            yield monthDate.clone()
-
-            if (rule.count) {
-              ++i
-
-              if (i >= rule.count) {
-                return
-              }
-            }
-
-            monthDate.add(1, "days")
-          }
-        }
-      } else if (rule.byDay) {
-
-      }
-
-      curDate.add(interval, "years")
-    } else if (rule.frequence === "monthly") {
-
-    } else {
+    if (iter == null) {
       throw new Error(`Invalid frequency: ${rule.frequency}`)
+    }
+
+    for (const v of iter()) {
+      yield v
+
+      if (count()) {
+        return
+      }
     }
   }
 }
